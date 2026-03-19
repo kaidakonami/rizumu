@@ -2,111 +2,159 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ガチャゲーム</title>
+<title>シンプル音ゲー</title>
 <style>
 body {
-    font-family: sans-serif;
-    background: linear-gradient(135deg, #1e1e2f, #3a3a6a);
+    margin: 0;
+    background: #111;
     color: white;
+    font-family: sans-serif;
     text-align: center;
-    padding-top: 50px;
 }
 
 h1 {
-    font-size: 2.5em;
+    margin: 10px;
 }
 
-#result {
-    margin: 30px auto;
-    padding: 20px;
+#game {
+    position: relative;
     width: 300px;
-    border-radius: 15px;
-    font-size: 1.5em;
-    transition: 0.3s;
+    height: 500px;
+    margin: 0 auto;
+    background: #222;
+    overflow: hidden;
+    border: 3px solid #555;
 }
 
-button {
-    font-size: 1.5em;
-    padding: 15px 30px;
+.note {
+    position: absolute;
+    width: 100%;
+    height: 20px;
+    background: cyan;
+    border-radius: 10px;
+}
+
+#judgeLine {
+    position: absolute;
+    bottom: 80px;
+    width: 100%;
+    height: 5px;
+    background: yellow;
+}
+
+#hitBtn {
+    margin-top: 20px;
+    padding: 15px 40px;
+    font-size: 20px;
     border: none;
     border-radius: 10px;
-    background: gold;
-    cursor: pointer;
-    transition: 0.2s;
+    background: orange;
 }
 
-button:hover {
-    transform: scale(1.1);
-}
-
-.common { background: #777; }
-.rare { background: #2a9df4; }
-.superrare { background: #a020f0; }
-.ultrarare { 
-    background: linear-gradient(45deg, gold, orange);
-    color: black;
-}
-
-#animation {
-    font-size: 2em;
-    margin-top: 20px;
-    height: 40px;
+#score, #combo, #judge {
+    margin: 10px;
+    font-size: 20px;
 }
 </style>
 </head>
 <body>
 
-<h1>🎰 ガチャゲーム</h1>
+<h1>🎵 音ゲー</h1>
 
-<button onclick="drawGacha()">ガチャを引く！</button>
+<div id="score">Score: 0</div>
+<div id="combo">Combo: 0</div>
+<div id="judge">---</div>
 
-<div id="animation"></div>
-<div id="result">結果がここに表示されます</div>
+<div id="game">
+    <div id="judgeLine"></div>
+</div>
+
+<button id="hitBtn">TAP!</button>
 
 <script>
-const characters = [
-    { name: "スライム", rarity: "common", rate: 50 },
-    { name: "ゴブリン", rarity: "common", rate: 25 },
-    { name: "ナイト", rarity: "rare", rate: 15 },
-    { name: "ドラゴン", rarity: "superrare", rate: 8 },
-    { name: "神龍", rarity: "ultrarare", rate: 2 }
-];
+const game = document.getElementById("game");
+const scoreEl = document.getElementById("score");
+const comboEl = document.getElementById("combo");
+const judgeEl = document.getElementById("judge");
 
-function drawGacha() {
-    const anim = document.getElementById("animation");
-    const resultDiv = document.getElementById("result");
+let score = 0;
+let combo = 0;
+let notes = [];
 
-    anim.textContent = "ガチャ中...";
-    resultDiv.textContent = "";
-    resultDiv.className = "";
+// ノーツ生成
+function spawnNote() {
+    const note = document.createElement("div");
+    note.className = "note";
+    note.style.top = "0px";
+    game.appendChild(note);
 
-    let counter = 0;
-    const interval = setInterval(() => {
-        anim.textContent = "★".repeat(counter % 5 + 1);
-        counter++;
-    }, 100);
-
-    setTimeout(() => {
-        clearInterval(interval);
-        anim.textContent = "";
-
-        const rand = Math.random() * 100;
-        let sum = 0;
-        let selected;
-
-        for (let c of characters) {
-            sum += c.rate;
-            if (rand <= sum) {
-                selected = c;
-                break;
-            }
-        }
-
-        resultDiv.textContent = selected.name + " GET!!";
-        resultDiv.className = selected.rarity;
-
-    }, 1500);
+    notes.push({
+        el: note,
+        y: 0
+    });
 }
+
+// ノーツを動かす
+function updateNotes() {
+    for (let i = notes.length - 1; i >= 0; i--) {
+        const n = notes[i];
+        n.y += 4;
+        n.el.style.top = n.y + "px";
+
+        // MISS判定
+        if (n.y > 420) {
+            game.removeChild(n.el);
+            notes.splice(i, 1);
+            combo = 0;
+            judgeEl.textContent = "MISS";
+        }
+    }
+}
+
+// 判定
+function hitNote() {
+    let hit = false;
+
+    for (let i = 0; i < notes.length; i++) {
+        const n = notes[i];
+        const diff = Math.abs(n.y - 400);
+
+        if (diff < 15) {
+            score += 100;
+            combo++;
+            judgeEl.textContent = "PERFECT!";
+            game.removeChild(n.el);
+            notes.splice(i, 1);
+            hit = true;
+            break;
+        } else if (diff < 35) {
+            score += 50;
+            combo++;
+            judgeEl.textContent = "GOOD!";
+            game.removeChild(n.el);
+            notes.splice(i, 1);
+            hit = true;
+            break;
+        }
+    }
+
+    if (!hit) {
+        combo = 0;
+        judgeEl.textContent = "MISS";
+    }
+
+    scoreEl.textContent = "Score: " + score;
+    comboEl.textContent = "Combo: " + combo;
+}
+
+// イベント
+document.getElementById("hitBtn").addEventListener("click", hitNote);
+
+// ループ
+setInterval(updateNotes, 16);
+
+// ノーツ生成（ランダム）
+setInterval(spawnNote, 800);
 </script>
 
 </body>
