@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ガチャゲーム</title>
+<style>
+body {
+    font-family: sans-serif;
+    background: linear-gradient(135deg, #1e1e2f, #3a3a6a);
+    color: white;
+    text-align: center;
+    padding-top: 50px;
+}
+
+h1 {
+    font-size: 2.5em;
+}
+
+#result {
+    margin: 30px auto;
+    padding: 20px;
+    width: 300px;
+    border-radius: 15px;
+    font-size: 1.5em;
+    transition: 0.3s;
+}
+
+button {
+    font-size: 1.5em;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    background: gold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+
+.common { background: #777; }
+.rare { background: #2a9df4; }
+.superrare { background: #a020f0; }
+.ultrarare { 
+    background: linear-gradient(45deg, gold, orange);
+    color: black;
+}
+
+#animation {
+    font-size: 2em;
+    margin-top: 20px;
+    height: 40px;
+}
+</style>
+</head>
+<body>
+
+<h1>🎰 ガチャゲーム</h1>
+
+<button onclick="drawGacha()">ガチャを引く！</button>
+
+<div id="animation"></div>
+<div id="result">結果がここに表示されます</div>
+
+<script>
+const characters = [
+    { name: "スライム", rarity: "common", rate: 50 },
+    { name: "ゴブリン", rarity: "common", rate: 25 },
+    { name: "ナイト", rarity: "rare", rate: 15 },
+    { name: "ドラゴン", rarity: "superrare", rate: 8 },
+    { name: "神龍", rarity: "ultrarare", rate: 2 }
+];
+
+function drawGacha() {
+    const anim = document.getElementById("animation");
+    const resultDiv = document.getElementById("result");
+
+    anim.textContent = "ガチャ中...";
+    resultDiv.textContent = "";
+    resultDiv.className = "";
+
+    let counter = 0;
+    const interval = setInterval(() => {
+        anim.textContent = "★".repeat(counter % 5 + 1);
+        counter++;
+    }, 100);
+
+    setTimeout(() => {
+        clearInterval(interval);
+        anim.textContent = "";
+
+        const rand = Math.random() * 100;
+        let sum = 0;
+        let selected;
+
+        for (let c of characters) {
+            sum += c.rate;
+            if (rand <= sum) {
+                selected = c;
+                break;
+            }
+        }
+
+        resultDiv.textContent = selected.name + " GET!!";
+        resultDiv.className = selected.rarity;
+
+    }, 1500);
+}
+</script>
+
+</body>
+</html>
